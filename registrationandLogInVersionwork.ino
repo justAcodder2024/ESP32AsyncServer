@@ -78,8 +78,8 @@ void setup() {
     request->send(SD_MMC, "/bootstrap-5.3.3-dist/js/bootstrap.bundle.min.js", "text/javascript"); 
 });
 // Serve Three.js main library
-server.on("/three.js-master/build/three.min.js", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(SD_MMC, "/three.js-master/build/three.min.js", "application/javascript");
+server.on("/three.js-master/build/three.module.min.js", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(SD_MMC, "/three.js-master/build/three.module.min.js", "application/javascript");
 });
 
     // Handle task saving via POST request 
