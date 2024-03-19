@@ -1,0 +1,383 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <link rel="stylesheet" href="bootstrap-5.3.3-dist/css/bootstrap.min.css">
+    <title>Task Manager</title> 
+    <style> 
+        h1{
+            color: purple;}
+        canvas#c {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            }
+    </style> 
+
+</head> 
+
+<body> 
+    
+    
+
+
+    <canvas id="c"></canvas>
+
+    <h1 class="text-center mt-5">Task Manager</h1> 
+    <div class="d-flex justify-content-center gap-2 mt-3" id="loginButtons"> 
+        <button class="btn btn-primary" onclick="openModal('loginModal')">Login</button> 
+        <button class="btn btn-secondary" onclick="openModal('registerModal')">Register</button> 
+    </div> 
+ 
+    <!-- Form for adding a new task --> 
+    <form class="mt-4" id="taskForm"> 
+        <input  class="form-control" type="text" id="taskInput" placeholder="Enter task"> 
+        <button class="btn btn-outline-secondary" type="submit">Add Task</button> 
+    </form> 
+
+ 
+    <!-- Container to display tasks --> 
+    <div class="container" id="taskList"></div> 
+    <!-- Greeting message --> 
+    <div class="mt-4" id="greeting"></div> 
+
+
+    <!-- Login/Register buttons --> 
+
+    <!-- Logout button --> 
+
+    <button  class="btn btn-danger mt-3" id="logoutButton" style="display: none;">Logout</button> 
+
+    <!-- Login Modal --> 
+
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="loginModalLabel">Login</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <input type="text" id="username" class="form-control" placeholder="Username">
+                        </div>
+                        <div class="mb-3">
+                            <input type="password" id="password" class="form-control" placeholder="Password">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+ 
+
+    <!-- Register Modal -->
+<div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="registerModalLabel">Register</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Add your register form here -->
+                <form id="registerForm">
+                    <div class="mb-3">
+                        <input type="text" id="newUsername" class="form-control" placeholder="New Username">
+                    </div>
+                    <div class="mb-3">
+                        <input type="password" id="newPassword" class="form-control" placeholder="New Password">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Register</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+<script src="three.js-master/build/three.module.min.js"></script>
+
+    <script> 
+        // Function to open a modal 
+        function openModal(modalId) { 
+            var myModal = new bootstrap.Modal(document.getElementById(modalId));
+            myModal.show();
+        } 
+        
+
+        // Close the modal when clicking outside of it 
+        window.onclick = function(event) { 
+            if (event.target.classList.contains('modal')) { 
+                event.target.style.display = "none"; 
+            } 
+
+        } 
+
+ 
+
+        // Event listener for login form submission 
+        document.getElementById('loginForm').addEventListener('submit', function(event) { 
+            event.preventDefault(); 
+            const username = document.getElementById('username').value; 
+            const password = document.getElementById('password').value; 
+            // Send login request to server 
+
+            fetch('/login', { 
+                method: 'POST', 
+                headers: { 
+                    'Content-Type': 'application/x-www-form-urlencoded' 
+                }, 
+                body: 'username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password) 
+            }) 
+            .then(response => { 
+                if (response.ok) { 
+                    return response.text(); // Extract username from response 
+                } else { 
+                    throw new Error('Login failed'); 
+                } 
+
+            }) 
+            .then(username => { 
+                document.getElementById('greeting').innerText = 'Welcome, ' + username; // Display greeting with username 
+                document.getElementById('loginButtons').style.display = 'none'; // Hide login/register buttons 
+                document.getElementById('logoutButton').style.display = 'block'; // Show logout button 
+                closeModal('loginModal'); // Close the login modal after successful login 
+            }) 
+
+            .catch(error => { 
+                alert(error.message); 
+            }); 
+        }); 
+
+ 
+
+        // Event listener for register form submission 
+        document.getElementById('registerForm').addEventListener('submit', function(event) { 
+            event.preventDefault(); 
+            const newUsername = document.getElementById('newUsername').value; 
+            const newPassword = document.getElementById('newPassword').value; 
+            // Send registration request to server 
+            fetch('/register', { 
+                method: 'POST', 
+                headers: { 
+                    'Content-Type': 'application/x-www-form-urlencoded' 
+                }, 
+                body: 'username=' + encodeURIComponent(newUsername) + '&password=' + encodeURIComponent(newPassword) 
+            }) 
+            .then(response => { 
+                if (response.ok) { 
+                    alert('Registration successful'); 
+                    closeModal('registerModal'); // Close the register modal after successful registration 
+                } else { 
+                    throw new Error('Registration failed'); 
+                } 
+
+            }) 
+            .catch(error => { 
+                alert(error.message); 
+            }); 
+        }); 
+
+ 
+
+        // Event listener for logout button click 
+
+        document.getElementById('logoutButton').addEventListener('click', function() { 
+            // Send logout request to server 
+            fetch('/logout') 
+            .then(response => { 
+                if (response.ok) { 
+                    document.getElementById('greeting').innerText = ''; // Clear greeting message 
+                    document.getElementById('loginButtons').style.display = 'block'; // Show login/register buttons 
+                    document.getElementById('logoutButton').style.display = 'none'; // Hide logout button 
+                } else { 
+                    throw new Error('Logout failed'); 
+                } 
+            }) 
+            .catch(error => { 
+                alert(error.message); 
+            }); 
+        }); 
+
+
+        // Function to fetch tasks and display them 
+        function fetchTasks() { 
+            fetch('/tasks') 
+                .then(response => response.text()) // Change to text to get HTML response 
+                .then(tasks => { 
+                    document.getElementById('taskList').innerHTML = tasks; // Update task list container with HTML response 
+                    addDeleteListeners(); // Add delete button event listeners after refreshing task list 
+                }); 
+        } 
+        // Fetch tasks on page load 
+        fetchTasks(); 
+
+        // Event listener for form submission 
+        document.getElementById('taskForm').addEventListener('submit', function(event) { 
+            event.preventDefault(); 
+            const taskInput = document.getElementById('taskInput').value; 
+            fetch('/save', { 
+                method: 'POST', 
+                headers: { 
+                    'Content-Type': 'application/x-www-form-urlencoded' 
+                },
+                body: 'task=' + encodeURIComponent(taskInput) 
+            }) 
+            .then(response => { 
+                if (response.ok) { 
+                    fetchTasks(); // Refresh task list after adding a task 
+                } 
+            }); 
+        }); 
+
+     
+
+        // Function to add event listeners to delete buttons 
+
+        function addDeleteListeners() { 
+            const deleteButtons = document.querySelectorAll('.delete-btn'); 
+            deleteButtons.forEach(button => { 
+                button.addEventListener('click', function() { 
+                    const task = this.getAttribute('data-task'); 
+                    deleteTask(task); // Call deleteTask function when delete button is clicked 
+                }); 
+            }); 
+        } 
+
+        // Function to delete a task 
+        function deleteTask(task) { 
+            fetch('/delete?task=' + encodeURIComponent(task)) 
+                .then(response => { 
+                    if (response.ok) { 
+                        fetchTasks(); // Refresh task list after deleting a task 
+                    } 
+                }); 
+        }
+        
+
+
+
+
+
+
+
+
+
+// 3d cubes from threeJS
+function main() {
+
+const canvas = document.querySelector( '#c' );
+const renderer = new THREE.WebGLRenderer( { antialias: true, canvas } );
+
+const fov = 75;
+const aspect = 2; // the canvas default
+const near = 0.1;
+const far = 5;
+const camera = new THREE.PerspectiveCamera( fov, aspect, near, far );
+camera.position.z = 2;
+
+const scene = new THREE.Scene();
+
+{
+
+    const color = 0xFFFFFF;
+    const intensity = 3;
+    const light = new THREE.DirectionalLight( color, intensity );
+    light.position.set( - 1, 2, 4 );
+    scene.add( light );
+
+}
+
+const boxWidth = 0.3;
+const boxHeight =  0.3;
+const boxDepth = 0.3;
+const geometry = new THREE.BoxGeometry( boxWidth, boxHeight, boxDepth );
+
+function makeInstance( geometry, color, x ) {
+
+    const material = new THREE.MeshPhongMaterial( { color } );
+
+    const cube = new THREE.Mesh( geometry, material );
+    scene.add( cube );
+
+    cube.position.x = x;
+
+    return cube;
+
+}
+
+const cubes = [
+    makeInstance( geometry, 0x44aa88, 0 ),
+    makeInstance( geometry, 0x8844aa, - 1 ),
+    makeInstance(geometry,0xffff,1)
+];
+
+function resizeRendererToDisplaySize( renderer ) {
+
+    const canvas = renderer.domElement;
+    const pixelRatio = window.devicePixelRatio;
+    const width = Math.floor( canvas.clientWidth * pixelRatio );
+    const height = Math.floor( canvas.clientHeight * pixelRatio );
+    const needResize = canvas.width !== width || canvas.height !== height;
+    if ( needResize ) {
+
+        renderer.setSize( width, height, false );
+
+    }
+
+    return needResize;
+
+}
+
+function render( time ) {
+
+    time *= 0.001;
+
+    if ( resizeRendererToDisplaySize( renderer ) ) {
+
+        const canvas = renderer.domElement;
+        camera.aspect = canvas.clientWidth / canvas.clientHeight;
+        camera.updateProjectionMatrix();
+
+    }
+
+    cubes.forEach( ( cube, ndx ) => {
+
+        const speed = 1 + ndx * .1;
+        const rot = time * speed;
+        cube.rotation.x = rot;
+        cube.rotation.y = rot;
+
+    } );
+
+    renderer.render( scene, camera );
+
+    requestAnimationFrame( render );
+
+}
+
+requestAnimationFrame( render );
+}
+main();
+    </script> 
+
+<script>
+    
+</script>
+
+<script src="bootstrap-5.3.3-dist/js/bootstrap.bundle.min.js"></script>
+
+    
+</body> 
+
+</html>
