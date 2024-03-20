@@ -125,39 +125,39 @@
 
  
 
-        // Event listener for login form submission 
-        document.getElementById('loginForm').addEventListener('submit', function(event) { 
-            event.preventDefault(); 
-            const username = document.getElementById('username').value; 
-            const password = document.getElementById('password').value; 
-            // Send login request to server 
+        // Event listener for login form submission
+    document.getElementById('loginForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        // Send login request to server
 
-            fetch('/login', { 
-                method: 'POST', 
-                headers: { 
-                    'Content-Type': 'application/x-www-form-urlencoded' 
-                }, 
-                body: 'username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password) 
-            }) 
-            .then(response => { 
-                if (response.ok) { 
-                    return response.text(); // Extract username from response 
-                } else { 
-                    throw new Error('Login failed'); 
-                } 
+        fetch('/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: 'username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password)
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.text(); // Extract welcome message from response
+            } else {
+                throw new Error('Login failed');
+            }
 
-            }) 
-            .then(username => { 
-                document.getElementById('greeting').innerText = 'Welcome, ' + username; // Display greeting with username 
-                document.getElementById('loginButtons').style.display = 'none'; // Hide login/register buttons 
-                document.getElementById('logoutButton').style.display = 'block'; // Show logout button 
-                closeModal('loginModal'); // Close the login modal after successful login 
-            }) 
+        })
+        .then(message => {
+            document.getElementById('greeting').innerText = message; // Display welcome message
+            document.getElementById('loginButtons').style.display = 'none'; // Hide login/register buttons
+            document.getElementById('logoutButton').style.display = 'block'; // Show logout button
+            closeModal('loginModal'); // Close the login modal after successful login
+        })
 
-            .catch(error => { 
-                alert(error.message); 
-            }); 
-        }); 
+        .catch(error => {
+            alert(error.message);
+        });
+    });
 
  
 
