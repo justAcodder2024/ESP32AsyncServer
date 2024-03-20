@@ -110,7 +110,7 @@ void setup() {
             tasksHTML += "<ul>"; // Start an unordered list 
             while (sqlite3_step(stmt) == SQLITE_ROW) { 
                 String task = String((char*)sqlite3_column_text(stmt, 0)); 
-                tasksHTML += "<li>" + task + " <button class='delete-btn' data-task='" + task + "'>Delete</button></li>"; 
+                tasksHTML += "<li>" + task + " <button class='edit-btn' data-task='" + task + "'>Edit</button> <button class='delete-btn' data-task='" + task + "'>Delete</button></li>";  
             } 
             tasksHTML += "</ul>"; // End the unordered list 
             sqlite3_finalize(stmt); 
@@ -145,8 +145,38 @@ void setup() {
             request->send(400, "text/plain", "Bad Request"); 
         } 
     }); 
-    // Handle user login via POST request
-server.on("/login", HTTP_POST, [](AsyncWebServerRequest *request) {
+    // Handle task editing via POST request
+server.on("/edit", HTTP_POST, [](AsyncWebServerRequest *request) {
+    if (request->hasParam("oldTask", true) && request->hasParam("newTask", true)) {
+        String oldTask = request->getParam("oldTask", true)->value();
+        String newTask = request->getParam("newTask", true)->value();
+
+        char *errMsg;
+        String sql = "UPDATE tasks SET task = '" + newTask + "' WHERE task = '" + oldTask + "';";
+        if (sqlite3_exec(db, sql.c_str(), 0, 0, &errMsg) != SQLITE_OK) {
+            Serial.printf("Failed to edit task: %s\n", errMsg);
+            sqlite3_free(errMsg);
+            request->send(500, "text/plain", "Server Error");
+            return;
+        }
+
+        // Respond with updated task list after editing
+        String tasks = "";
+        sqlite3_stmt *stmt;
+        const char *selectSql = "SELECT task FROM tasks;";
+        if (sqlite3_prepare_v2(db, selectSql, -1, &stmt, NULL) == SQLITE_OK) {
+            while (sqlite3_step(stmt) == SQLITE_ROW) {
+                tasks += String((char*)sqlite3_column_text(stmt, 0)) + "<br>";
+            }
+            sqlite3_finalize(stmt);
+        }
+        request->send(200, "text/html", tasks);
+    } else {
+        request->send(400, "text/plain", "Bad Request");
+    }
+});
+    // handle login via POST Request
+   server.on("/login", HTTP_POST, [](AsyncWebServerRequest *request) {
     if (request->hasParam("username", true) && request->hasParam("password", true)) {
         String username = request->getParam("username", true)->value();
         String password = request->getParam("password", true)->value();
@@ -173,7 +203,8 @@ server.on("/login", HTTP_POST, [](AsyncWebServerRequest *request) {
 
         if (count > 0) {
             // Successful login
-            request->send(200, "text/plain", "Login successful");
+            String response = "Welcome, " + username; // Construct the welcome message
+            request->send(200, "text/plain", response); // Send the welcome message
             Serial.println("Login successful for user: " + username);
         } else {
             // Failed login
@@ -185,6 +216,7 @@ server.on("/login", HTTP_POST, [](AsyncWebServerRequest *request) {
         request->send(400, "text/plain", "Bad Request");
     }
 });
+
     // Handle user registration via POST request 
 server.on("/register", HTTP_POST, [](AsyncWebServerRequest *request) { 
     if (request->hasParam("username", true) && request->hasParam("password", true)) { 
