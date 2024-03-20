@@ -106,7 +106,7 @@ void setup() {
             tasksHTML += "<ul>"; // Start an unordered list 
             while (sqlite3_step(stmt) == SQLITE_ROW) { 
                 String task = String((char*)sqlite3_column_text(stmt, 0)); 
-                tasksHTML += "<li>" + task + " <button class='delete-btn' data-task='" + task + "'>Delete</button></li>"; 
+                tasksHTML += "<li>" + task + " <button class='edit-btn' data-task='" + task + "'>Edit</button> <button class='delete-btn' data-task='" + task + "'>Delete</button></li>";  
             } 
             tasksHTML += "</ul>"; // End the unordered list 
             sqlite3_finalize(stmt); 
