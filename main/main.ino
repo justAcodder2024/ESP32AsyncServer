@@ -141,8 +141,7 @@ void setup() {
             request->send(400, "text/plain", "Bad Request"); 
         } 
     }); 
-    // Handle user login via POST request
-server.on("/login", HTTP_POST, [](AsyncWebServerRequest *request) {
+   server.on("/login", HTTP_POST, [](AsyncWebServerRequest *request) {
     if (request->hasParam("username", true) && request->hasParam("password", true)) {
         String username = request->getParam("username", true)->value();
         String password = request->getParam("password", true)->value();
@@ -169,7 +168,8 @@ server.on("/login", HTTP_POST, [](AsyncWebServerRequest *request) {
 
         if (count > 0) {
             // Successful login
-            request->send(200, "text/plain", "Login successful");
+            String response = "Welcome, " + username; // Construct the welcome message
+            request->send(200, "text/plain", response); // Send the welcome message
             Serial.println("Login successful for user: " + username);
         } else {
             // Failed login
@@ -181,6 +181,7 @@ server.on("/login", HTTP_POST, [](AsyncWebServerRequest *request) {
         request->send(400, "text/plain", "Bad Request");
     }
 });
+
     // Handle user registration via POST request 
 server.on("/register", HTTP_POST, [](AsyncWebServerRequest *request) { 
     if (request->hasParam("username", true) && request->hasParam("password", true)) { 
