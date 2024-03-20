@@ -216,7 +216,7 @@
                 .then(response => response.text()) // Change to text to get HTML response 
                 .then(tasks => { 
                     document.getElementById('taskList').innerHTML = tasks; // Update task list container with HTML response 
-                    addDeleteListeners(); // Add delete button event listeners after refreshing task list 
+                    addTaskListeners(); // Add event listeners to edit and delete buttons
                 }); 
         } 
         // Fetch tasks on page load 
@@ -242,17 +242,44 @@
 
      
 
-        // Function to add event listeners to delete buttons 
+         // Function to add event listeners to edit and delete buttons
+    function addTaskListeners() {
+        const editButtons = document.querySelectorAll('.edit-btn');
+        const deleteButtons = document.querySelectorAll('.delete-btn');
 
-        function addDeleteListeners() { 
-            const deleteButtons = document.querySelectorAll('.delete-btn'); 
-            deleteButtons.forEach(button => { 
-                button.addEventListener('click', function() { 
-                    const task = this.getAttribute('data-task'); 
-                    deleteTask(task); // Call deleteTask function when delete button is clicked 
-                }); 
-            }); 
-        } 
+        editButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const task = this.getAttribute('data-task');
+                const newTask = prompt('Edit Task:', task);
+                if (newTask !== null && newTask !== '') {
+                    editTask(task, newTask); // Call editTask function when edit button is clicked
+                }
+            });
+        });
+
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const task = this.getAttribute('data-task');
+                deleteTask(task); // Call deleteTask function when delete button is clicked
+            });
+        });
+    }
+
+    // Function to edit a task
+    function editTask(oldTask, newTask) {
+        fetch('/edit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: 'oldTask=' + encodeURIComponent(oldTask) + '&newTask=' + encodeURIComponent(newTask)
+            })
+            .then(response => {
+                if (response.ok) {
+                    fetchTasks(); // Refresh task list after editing a task
+                }
+            });
+    }
 
         // Function to delete a task 
         function deleteTask(task) { 
