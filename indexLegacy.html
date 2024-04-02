@@ -16,6 +16,22 @@
             height: 100%;
             z-index: -1;
             }
+            /* Style for task list */
+    #taskList {
+        color: white; /* Set text color to white */
+        font-size: 20px; /* Set font size to 20px */
+    }
+
+    /* Style for task list items */
+    #taskList li {
+        margin-bottom: 10px; /* Add some bottom margin for better spacing */
+    }
+    /* Style for greeting message */
+    #greeting {
+        color: white; /* Set text color to white */
+        font-size: 18px; /* Set font size to 18px */
+        margin-top: 10px; /* Add some top margin for spacing */
+    }
     </style> 
 
 </head> 
@@ -122,42 +138,53 @@
             } 
 
         } 
-
+        // Function to close a modal
+        function closeModal(modalId) {
+        var myModal = new bootstrap.Modal(document.getElementById(modalId));
+        myModal.hide();
+        }
  
 
-        // Event listener for login form submission
-    document.getElementById('loginForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        // Send login request to server
+        let sessionId = ""; // Variable to store session ID
 
-        fetch('/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: 'username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password)
-        })
-        .then(response => {
-            if (response.ok) {
-                return response.text(); // Extract welcome message from response
-            } else {
-                throw new Error('Login failed');
-            }
+// Event listener for login form submission
+document.getElementById('loginForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    // Send login request to server
 
-        })
-        .then(message => {
-            document.getElementById('greeting').innerText = message; // Display welcome message
-            document.getElementById('loginButtons').style.display = 'none'; // Hide login/register buttons
-            document.getElementById('logoutButton').style.display = 'block'; // Show logout button
+    fetch('/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password)
+    })
+    .then(response => {
+        if (response.ok) {
+            // Extract session ID from response headers
+            sessionId = response.headers.get('sessionId');
+            return response.text(); // Extract welcome message from response
             closeModal('loginModal'); // Close the login modal after successful login
-        })
 
-        .catch(error => {
-            alert(error.message);
-        });
+        } else {
+            throw new Error('Login failed');
+        }
+    })
+    .then(message => {
+        document.getElementById('greeting').innerText = message; // Display welcome message
+        document.getElementById('loginButtons').style.display = 'none'; // Hide login/register buttons
+        document.getElementById('logoutButton').style.display = 'block'; // Show logout button
+        closeModal('loginModal'); // Close the login modal after successful login
+        // Now you have the sessionId, you can use it in subsequent requests
+        fetchTasks(); // Example: Fetch tasks after successful login
+    })
+    .catch(error => {
+        alert(error.message);
     });
+});
+
 
  
 
@@ -200,6 +227,7 @@
                     document.getElementById('greeting').innerText = ''; // Clear greeting message 
                     document.getElementById('loginButtons').style.display = 'block'; // Show login/register buttons 
                     document.getElementById('logoutButton').style.display = 'none'; // Hide logout button 
+                    document.getElementById("taskList").style.display = 'none';// hide task after logout
                 } else { 
                     throw new Error('Logout failed'); 
                 } 
@@ -210,86 +238,131 @@
         }); 
 
 
-        // Function to fetch tasks and display them 
-        function fetchTasks() { 
-            fetch('/tasks') 
-                .then(response => response.text()) // Change to text to get HTML response 
-                .then(tasks => { 
-                    document.getElementById('taskList').innerHTML = tasks; // Update task list container with HTML response 
-                    addTaskListeners(); // Add event listeners to edit and delete buttons
-                }); 
-        } 
-        // Fetch tasks on page load 
-        fetchTasks(); 
+      // Function to fetch tasks and display them 
+function fetchTasks() { 
+    fetch('/tasks', {
+        headers: {
+            'sessionId': sessionId // Include session ID in request headers
+        }
+    }) 
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to fetch tasks');
+        }
+        return response.text(); // Change to text to get HTML response 
+    })
+    .then(tasks => { 
+        // Clear the task list container before appending new tasks
+        document.getElementById('taskList').innerHTML = "";
+        document.getElementById('taskList').innerHTML = tasks; // Update task list container with HTML response 
+        addTaskListeners(); // Add event listeners to edit and delete buttons
+    })
+    .catch(error => {
+        console.error('Error fetching tasks:', error);
+        // Handle error gracefully, e.g., display a message to the user
+    }); 
+}
+
+// Initial fetch of tasks when the page loads
+fetchTasks(); 
 
         // Event listener for form submission 
-        document.getElementById('taskForm').addEventListener('submit', function(event) { 
-            event.preventDefault(); 
-            const taskInput = document.getElementById('taskInput').value; 
-            fetch('/save', { 
-                method: 'POST', 
-                headers: { 
-                    'Content-Type': 'application/x-www-form-urlencoded' 
-                },
-                body: 'task=' + encodeURIComponent(taskInput) 
-            }) 
-            .then(response => { 
-                if (response.ok) { 
-                    fetchTasks(); // Refresh task list after adding a task 
-                } 
-            }); 
-        }); 
+document.getElementById('taskForm').addEventListener('submit', function(event) { 
+    event.preventDefault(); 
+    const taskInput = document.getElementById('taskInput').value; 
+    fetch('/save', { 
+        method: 'POST', 
+        headers: { 
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'sessionId': sessionId // Include session ID in request headers
+        },
+        body: 'task=' + encodeURIComponent(taskInput) 
+    }) 
+    .then(response => { 
+        if (response.ok) { 
+            fetchTasks();
+        } 
+    }); 
+});
 
      
 
-         // Function to add event listeners to edit and delete buttons
-    function addTaskListeners() {
-        const editButtons = document.querySelectorAll('.edit-btn');
-        const deleteButtons = document.querySelectorAll('.delete-btn');
+      // Function to add event listeners to edit and delete buttons
+function addTaskListeners() {
+    const editButtons = document.querySelectorAll('.edit-btn');
+    const deleteButtons = document.querySelectorAll('.delete-btn');
 
-        editButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const task = this.getAttribute('data-task');
-                const newTask = prompt('Edit Task:', task);
-                if (newTask !== null && newTask !== '') {
-                    editTask(task, newTask); // Call editTask function when edit button is clicked
-                }
-            });
+    editButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const taskId = this.getAttribute('data-task-id');
+            const newTask = prompt('Edit Task:');
+            if (newTask !== null && newTask.trim() !== '') {
+                editTask(taskId, newTask); // Call editTask function when edit button is clicked
+            }
         });
+    });
 
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const task = this.getAttribute('data-task');
-                deleteTask(task); // Call deleteTask function when delete button is clicked
-            });
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const taskId = this.getAttribute('data-task-id');
+            deleteTask(taskId); // Call deleteTask function when delete button is clicked
         });
-    }
+    });
+}
 
-    // Function to edit a task
-    function editTask(oldTask, newTask) {
-        fetch('/edit', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: 'oldTask=' + encodeURIComponent(oldTask) + '&newTask=' + encodeURIComponent(newTask)
-            })
-            .then(response => {
-                if (response.ok) {
-                    fetchTasks(); // Refresh task list after editing a task
-                }
-            });
-    }
-
-        // Function to delete a task 
-        function deleteTask(task) { 
-            fetch('/delete?task=' + encodeURIComponent(task)) 
-                .then(response => { 
-                    if (response.ok) { 
-                        fetchTasks(); // Refresh task list after deleting a task 
-                    } 
-                }); 
+// Function to delete a task
+function deleteTask(taskId) {
+    fetch('/delete', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'sessionId': sessionId
+        },
+        body: 'taskId=' + encodeURIComponent(taskId)
+    })
+    .then(response => {
+        if (response.ok) {
+            // Remove the task from the UI
+            document.getElementById(taskId).remove();
+            fetchTasks();
+        } else {
+            throw new Error('Failed to delete task');
         }
+    })
+    .catch(error => {
+        alert(error.message);
+    });
+}
+
+// Function to edit a task
+function editTask(taskId, newTaskText) {
+    fetch('/edit', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'sessionId': sessionId
+        },
+        body: 'taskId=' + encodeURIComponent(taskId) + '&taskText=' + encodeURIComponent(newTaskText)
+    })
+    .then(response => {
+        if (response.ok) {
+            // Update the task text in the UI
+            document.getElementById(taskId).textContent = newTaskText;
+            fetchTasks();
+        } else {
+            throw new Error('Failed to edit task');
+        }
+    })
+    .catch(error => {
+        alert(error.message);
+    });
+}
+
+
+// Initial fetch of tasks when the page loads
+fetchTasks();
+
+
         
 
 
